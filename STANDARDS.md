@@ -4,7 +4,7 @@
 
 These standards define unambiguous, enforceable rules for writing Klar code. They are designed to work with AI-assisted development (Claude Code) and provide clear guidance for both humans and AI to follow.
 
-**Version**: 0.1.0 (aligned with Klar Milestone 5)
+**Version**: 0.2.0 (aligned with Klar Phase 1 Complete)
 
 ---
 
@@ -172,7 +172,7 @@ c.modify()
 | `T` | Owned value (takes ownership) |
 | `&T` | Immutable reference (read-only borrow) |
 | `&mut T` | Mutable reference (read-write borrow) |
-| `?T` | Optional value (may be `none`) |
+| `?T` | Optional value (may be `None`) |
 
 ### 3.4 Copy vs Move Types
 
@@ -340,12 +340,12 @@ result match {
 let value = result.unwrap_or(default)
 
 // Pattern 3: Map the success value
-let mapped = result.map(fn(x) { x * 2 })
+let mapped = result.map(|x| x * 2)
 
 // Pattern 4: Chain fallible operations
 let final = first_try()
-    .or_else(fn(_) { second_try() })
-    .or_else(fn(_) { third_try() })
+    .or_else(|_| second_try())
+    .or_else(|_| third_try())
 ```
 
 ### 4.7 Panic and Assert
@@ -461,9 +461,9 @@ fn max[T: Ordered](a: T, b: T) -> T {
     if a > b { a } else { b }
 }
 
-fn print_all[T: Display](items: &[T]) {
+fn print_all[T: Printable](items: &[T]) {
     for item in items {
-        println("{}", item)
+        println("{item}")
     }
 }
 ```
@@ -873,7 +873,7 @@ pub fn get_health(self: &Player) -> i32 { ... }
 // PREFERRED: Message passing
 let (tx, rx) = channel[Message]()
 
-spawn fn() {
+spawn || {
     loop {
         let msg = rx.recv()
         process(msg)
@@ -894,7 +894,7 @@ let shared = Arc.new(Mutex.new(data))
 
 ```klar
 async fn fetch_all(urls: [string]) -> [Result[Response, HttpError]] {
-    let futures = urls.map(fn(url) { fetch(url) })
+    let futures = urls.map(|url| fetch(url))
     await_all(futures)
 }
 ```
@@ -907,10 +907,10 @@ async fn fetch_all(urls: [string]) -> [Result[Response, HttpError]] {
 
 ```klar
 fn parallel_process(items: [Item]) -> [Result] {
-    let handles = items.map(fn(item) {
-        spawn fn() { process_item(item) }
+    let handles = items.map(|item| {
+        spawn || process_item(item)
     })
-    handles.map(fn(h) { h.join() })
+    handles.map(|h| h.join())
 }
 ```
 
@@ -1094,4 +1094,4 @@ Before committing code, verify:
 
 ---
 
-*CarbideKlar Standards v0.1.0 - Aligned with Klar Phase 1*
+*CarbideKlar Standards v0.2.0 - Aligned with Klar Phase 1 Complete*

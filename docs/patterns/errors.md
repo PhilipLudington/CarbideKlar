@@ -176,11 +176,11 @@ Try multiple approaches, falling back on error:
 fn load_config() -> Result[Config, ConfigError] {
     // Try user config first
     load_config_file("~/.config/app.toml")
-        .or_else(fn(_) {
+        .or_else(|_| {
             // Fall back to system config
             load_config_file("/etc/app.toml")
         })
-        .or_else(fn(_) {
+        .or_else(|_| {
             // Fall back to defaults
             Ok(Config.default())
         })
@@ -235,7 +235,7 @@ fn load_user_data(user_id: i64) -> Result[UserData, AppError] {
     let config_path = get_user_config_path(user_id)
 
     load_config(config_path)
-        .map_err(fn(e) {
+        .map_err(|e| {
             AppError.UserLoadFailed {
                 user_id: user_id,
                 cause: e.message()
@@ -272,7 +272,7 @@ let _ = save_data(data)
 // GOOD: Handle or propagate
 save_data(data)?
 // or
-save_data(data).unwrap_or_else(fn(e) { log.error("Save failed: {e}") })
+save_data(data).unwrap_or_else(|e| log.error("Save failed: {e}"))
 ```
 
 ### 2. Using panic for Expected Failures

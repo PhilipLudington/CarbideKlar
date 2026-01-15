@@ -59,10 +59,10 @@ result match {
 let value = result.unwrap_or(default_value)
 
 // Transform success value
-let mapped = result.map(fn(x) { transform(x) })
+let mapped = result.map(|x| transform(x))
 
 // Chain fallbacks
-let final = try_first().or_else(fn(_) { try_second() })
+let final = try_first().or_else(|_| try_second())
 ```
 
 ## Traps vs Errors

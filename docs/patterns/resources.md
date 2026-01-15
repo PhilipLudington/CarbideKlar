@@ -58,7 +58,7 @@ fn with_file[T](path: string, f: fn(&mut File) -> T) -> Result[T, IoError] {
 }
 
 // Usage
-let contents = with_file("data.txt", fn(f) {
+let contents = with_file("data.txt", |f| {
     f.read_to_string()
 })?
 ```

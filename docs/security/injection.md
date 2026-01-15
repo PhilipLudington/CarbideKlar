@@ -40,7 +40,7 @@ fn convert_file(filename: string) -> Result[(), Error] {
 
 fn is_safe_filename(name: &string) -> bool {
     // Allow only alphanumeric, dash, underscore, dot
-    name.chars().all(fn(c) {
+    name.chars().all(|c| {
         c.is_alphanumeric() or c == '-' or c == '_' or c == '.'
     })
 }
@@ -229,7 +229,7 @@ impl UserInput {
         }
 
         // Character check
-        if raw.chars().any(fn(c) { c.is_control() }) {
+        if raw.chars().any(|c| c.is_control()) {
             return Err(InputError.ControlCharacters)
         }
 

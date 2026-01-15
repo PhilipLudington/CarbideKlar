@@ -25,7 +25,7 @@ pub struct Player { ... }
 // PREFERRED: Message passing
 let (tx, rx) = channel[Message]()
 
-spawn fn() {
+spawn || {
     loop {
         let msg = rx.recv()
         process(msg)
@@ -41,7 +41,7 @@ tx.send(Message.DoWork(data))
 let shared = Arc.new(Mutex.new(data))
 let shared_clone = shared.clone()
 
-spawn fn() {
+spawn || {
     let guard = shared_clone.lock()
     guard.modify()
 }
@@ -53,7 +53,7 @@ spawn fn() {
 
 ```klar
 async fn fetch_all(urls: [string]) -> [Response] {
-    let futures = urls.map(fn(url) { fetch(url) })
+    let futures = urls.map(|url| fetch(url))
     await_all(futures)
 }
 ```
@@ -66,10 +66,10 @@ async fn fetch_all(urls: [string]) -> [Response] {
 
 ```klar
 fn parallel_process(items: [Item]) -> [Result] {
-    let handles = items.map(fn(item) {
-        spawn fn() { process(item) }
+    let handles = items.map(|item| {
+        spawn || process(item)
     })
-    handles.map(fn(h) { h.join() })
+    handles.map(|h| h.join())
 }
 ```
 

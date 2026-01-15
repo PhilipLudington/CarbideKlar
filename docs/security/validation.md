@@ -246,9 +246,7 @@ fn is_valid_domain(domain: &string) -> bool {
         if label.is_empty() or label.len() > 63 {
             return false
         }
-        if not label.chars().all(fn(c) {
-            c.is_alphanumeric() or c == '-'
-        }) {
+        if not label.chars().all(|c| c.is_alphanumeric() or c == '-') {
             return false
         }
         if label.starts_with('-') or label.ends_with('-') {
@@ -282,16 +280,16 @@ impl ValidatedRegistration {
         let mut errors = Vec.new()
 
         let username = Username.parse(&raw.username)
-            .map_err(fn(e) { errors.push(FieldError.new("username", e)) });
+            .map_err(|e| errors.push(FieldError.new("username", e)));
 
         let email = Email.parse(&raw.email)
-            .map_err(fn(e) { errors.push(FieldError.new("email", e)) });
+            .map_err(|e| errors.push(FieldError.new("email", e)));
 
         let password = Password.validate(&raw.password)
-            .map_err(fn(e) { errors.push(FieldError.new("password", e)) });
+            .map_err(|e| errors.push(FieldError.new("password", e)));
 
         let age = validate_age(raw.age)
-            .map_err(fn(e) { errors.push(FieldError.new("age", e)) });
+            .map_err(|e| errors.push(FieldError.new("age", e)));
 
         if not errors.is_empty() {
             return Err(RegistrationError.ValidationFailed(errors))
@@ -326,7 +324,7 @@ fn sanitize_html(input: &string) -> string {
 fn sanitize_filename(input: &string) -> string {
     input
         .chars()
-        .filter(fn(c) { c.is_alphanumeric() or c == '.' or c == '-' or c == '_' })
+        .filter(|c| c.is_alphanumeric() or c == '.' or c == '-' or c == '_')
         .collect()
 }
 
