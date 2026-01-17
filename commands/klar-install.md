@@ -1,93 +1,40 @@
-# /klar-install
+# Klar Install
 
-Install CarbideKlar into an existing project.
+Install the CarbideKlar Klar development framework into the current project.
 
-## Usage
+## Instructions
 
-```
-/klar-install
-```
+1. **Clone CarbideKlar** into the project:
+   ```bash
+   git clone https://github.com/PhilipLudington/CarbideKlar.git carbideklar
+   rm -rf carbideklar/.git
+   ```
 
-Run from the root of your existing Klar project.
+2. **Copy Claude Code integration**:
+   ```bash
+   mkdir -p .claude/commands .claude/rules
+   cp carbideklar/commands/*.md .claude/commands/
+   cp carbideklar/rules/*.md .claude/rules/
+   ```
 
-## What This Command Does
+3. **Add CarbideKlar reference to CLAUDE.md**:
 
-1. Detects project structure
-2. Creates `.claude/` directories if needed
-3. Copies CarbideKlar rules and commands
-4. Optionally adds reference to CLAUDE.md
+   If `./CLAUDE.md` doesn't exist, create it. Add the following:
+   ```markdown
+   ## Klar Development
 
-## Instructions for Claude
+   This project uses the CarbideKlar framework for Klar development standards.
+   See `carbideklar/CARBIDEKLAR.md` for coding guidelines and available commands.
+   ```
 
-When the user runs `/klar-install`:
+4. **Verify installation**:
+   - Confirm `.claude/commands/` contains klar-*.md files
+   - Confirm `.claude/rules/` contains the rule files
+   - Confirm `CLAUDE.md` references the CarbideKlar framework
 
-1. **Verify project location**:
-   - Check for `src/` directory or `.kl` files
-   - If not found, warn: "This doesn't appear to be a Klar project. Continue anyway?"
+## After Installation
 
-2. **Create directories**:
-```bash
-mkdir -p .claude/commands
-mkdir -p .claude/rules
-```
-
-3. **Copy CarbideKlar files**:
-
-From CarbideKlar repository, copy:
-- `commands/*.md` → `.claude/commands/`
-- `rules/*.md` → `.claude/rules/`
-
-4. **Create or update CLAUDE.md**:
-
-If `.claude/CLAUDE.md` doesn't exist, create it:
-```markdown
-# Project Instructions
-
-This project follows CarbideKlar standards for Klar development.
-
-## Standards
-
-See [CarbideKlar STANDARDS.md](https://github.com/mrphil/CarbideKlar/blob/main/STANDARDS.md) for complete standards.
-
-## Quick Reference
-
-- Types: `PascalCase`
-- Functions: `snake_case`
-- All fallible operations return `Result[T, E]`
-- Validate external input before use
-- Document all public items
-
-## Commands
-
+The following commands are now available:
 - `/klar-review` - Review code against standards
 - `/klar-safety` - Security-focused review
-- `/klar-check` - Run build and tests
-```
-
-If it exists, append CarbideKlar reference if not present.
-
-5. **Verify installation**:
-   - List installed files
-   - Confirm rules will be auto-loaded
-
-6. **Report completion**:
-```
-CarbideKlar installed successfully!
-
-Installed:
-  .claude/commands/ - 6 slash commands
-  .claude/rules/    - 10 rule files
-
-Available commands:
-  /klar-review  - Review code against standards
-  /klar-safety  - Security-focused review
-  /klar-check   - Run build and tests
-  /klar-update  - Update CarbideKlar
-```
-
-## Notes
-
-- Does NOT modify existing source files
-- Does NOT change build configuration
-- Safe to run multiple times (overwrites with latest)
-- Works with any directory structure
+- `/klar-check` - Run validation tooling

@@ -37,18 +37,23 @@ This creates a new project with:
 
 ### Adding to an Existing Project
 
-1. **Copy the install command** to your project:
+1. **Clone CarbideKlar** into your project:
    ```bash
-   mkdir -p .claude/commands
-   curl -o .claude/commands/klar-install.md https://raw.githubusercontent.com/PhilipLudington/CarbideKlar/main/commands/klar-install.md
+   git clone https://github.com/PhilipLudington/CarbideKlar.git carbideklar
+   rm -rf carbideklar/.git
    ```
 
-2. **Run the install command** in Claude Code:
+2. **Copy Claude Code integration**:
+   ```bash
+   mkdir -p .claude/commands .claude/rules
+   cp carbideklar/commands/*.md .claude/commands/
+   cp carbideklar/rules/*.md .claude/rules/
+   ```
+
+3. **Run the install command** in Claude Code (optional, for additional setup):
    ```
    /klar-install
    ```
-
-This will copy CarbideKlar's rules and commands into your project's `.claude/` directory.
 
 ## Standards Overview
 
