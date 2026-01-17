@@ -22,9 +22,16 @@ struct WindowConfig {
     fullscreen: bool
 }
 
-const WINDOW_CONFIG_DEFAULT = WindowConfig { ... }
+const WINDOW_CONFIG_DEFAULT: WindowConfig = WindowConfig {
+    title: "Untitled"
+    x: 100
+    y: 100
+    width: 800
+    height: 600
+    fullscreen: false
+}
 
-fn create_window(config: WindowConfig) -> Window
+fn create_window(config: WindowConfig) -> Window { ... }
 ```
 
 ## Method Receivers
@@ -32,13 +39,19 @@ fn create_window(config: WindowConfig) -> Window
 ```klar
 impl Player {
     // Read-only access
-    fn get_health(self: &Player) -> i32
+    fn get_health(self: &Player) -> i32 {
+        return self.health
+    }
 
     // Mutable access
-    fn take_damage(self: &mut Player, amount: i32)
+    fn take_damage(self: &mut Player, amount: i32) {
+        self.health = max(0, self.health - amount)
+    }
 
     // Consumes self
-    fn into_corpse(self: Player) -> Corpse
+    fn into_corpse(self: Player) -> Corpse {
+        return Corpse { name: self.name, position: self.position }
+    }
 }
 ```
 
@@ -47,6 +60,7 @@ impl Player {
 - Return owned values by default
 - Return `&T` only for accessors into internal state
 - Return `Result[T, E]` for fallible operations
+- Always use explicit `return` statements
 
 ## Trait Design
 
@@ -54,8 +68,13 @@ impl Player {
 
 ```klar
 // GOOD: Focused
-trait Readable { fn read(...) }
-trait Writable { fn write(...) }
+trait Readable {
+    fn read(self: &mut Self, buf: &mut [u8]) -> Result[usize, IoError]
+}
+
+trait Writable {
+    fn write(self: &mut Self, data: &[u8]) -> Result[usize, IoError]
+}
 
 // BAD: Kitchen sink
 trait Stream { fn read(); fn write(); fn seek(); fn flush(); }
@@ -63,15 +82,98 @@ trait Stream { fn read(); fn write(); fn seek(); fn flush(); }
 
 Provide default implementations where sensible.
 
-## Generics
+## Generic Functions
 
-Use trait bounds to constrain:
+Use trait bounds to constrain generic types:
 
 ```klar
-fn max[T: Ordered](a: T, b: T) -> T
-fn print_all[T: Display](items: &[T])
-fn process[T: Ordered + Clone](value: T)
+// Single trait bound
+fn max[T: Ordered](a: T, b: T) -> T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+// Multiple trait bounds
+fn print_sorted[T: Ordered + Printable](items: List[T]) {
+    let sorted: List[T] = sort(items)
+    for item in sorted {
+        item.print()
+    }
+}
+
+// Where clause for complex bounds
+fn merge[K, V](a: Map[K, V], b: Map[K, V]) -> Map[K, V]
+where
+    K: Hashable + Eq
+    V: Clone
+{
+    // Implementation
+}
 ```
+
+## Generic Types
+
+Define generic structs and enums with type parameters:
+
+```klar
+// Generic struct
+struct Pair[A, B] {
+    first: A
+    second: B
+}
+
+// Generic enum
+enum Option[T] {
+    Some(T)
+    None
+}
+
+enum Result[T, E] {
+    Ok(T)
+    Err(E)
+}
+
+// Usage with explicit type parameters
+let pair: Pair[i32, string] = Pair { first: 42, second: "hello" }
+let maybe: Option[i32] = Some(42)
+```
+
+## Trait Implementation
+
+Use the `impl Type: Trait` syntax:
+
+```klar
+// Implement for concrete type
+impl Point: Ordered {
+    fn compare(self, other: Point) -> Ordering {
+        if self.x < other.x {
+            return Ordering.Less
+        } else if self.x > other.x {
+            return Ordering.Greater
+        }
+        return Ordering.Equal
+    }
+}
+
+// Implement for generic type
+impl List[T]: Iterator {
+    type Item = T
+    fn next(self: &mut Self) -> ?T { ... }
+}
+```
+
+## Builtin Traits
+
+Use Klar's builtin traits for common operations:
+
+| Trait | Purpose | Example |
+|-------|---------|---------|
+| `Eq` | Equality comparison | `fn equals[T: Eq](a: T, b: T) -> bool` |
+| `Ordered` | Ordering comparison | `fn max[T: Ordered](a: T, b: T) -> T` |
+| `Clone` | Explicit copying | `fn duplicate[T: Clone](v: T) -> (T, T)` |
+| `Drop` | Custom cleanup | `impl Handle: Drop { fn drop(...) }` |
 
 Prefer concrete types in public APIs when types are known.
 
@@ -101,5 +203,10 @@ Document all public items:
 ///
 /// # Returns
 /// New Player, or error if name invalid.
-pub fn create_player(name: string) -> Result[Player, Error]
+///
+/// # Example
+/// ```
+/// let player: Result[Player, Error] = create_player("Alice")
+/// ```
+pub fn create_player(name: string) -> Result[Player, Error] { ... }
 ```

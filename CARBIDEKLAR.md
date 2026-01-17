@@ -1,6 +1,8 @@
 # CarbideKlar Quick Reference
 
 > For Claude Code and AI-assisted Klar development
+>
+> **Version 0.4.0** - Aligned with Klar Phase 4 (Language Completion)
 
 ## Standards Location
 
@@ -18,41 +20,67 @@ Full standards: `STANDARDS.md`
 ### Ownership
 - Every value has one owner
 - Use `&T` for immutable borrow, `&mut T` for mutable borrow
-- No stored references in structs - use ownership or indices
+- No stored references in structs - use ownership, `Rc[T]`, or indices
+
+### Syntax Requirements
+- **Explicit types** on all variables: `let x: i32 = 42`
+- **Explicit return** in all functions: `return value`
+- **Statement-based control flow**: assign inside blocks, not expression returns
+- **Closures with full types**: `|x: i32| -> i32 { return x * 2 }`
 
 ### Error Handling
 - Return `Result[T, E]` for fallible operations
 - Use `?` to propagate errors
 - Use `?T` (Option) for values that may be absent
-- Define custom error enums with context
+- Use `??` for default values: `value ?? default`
+
+### Generics and Traits
+- Generic functions: `fn max[T: Ordered](a: T, b: T) -> T`
+- Generic structs: `struct Pair[A, B] { first: A, second: B }`
+- Trait bounds: `T: Ordered + Clone`
+- Builtin traits: `Eq`, `Ordered`, `Clone`, `Drop`
 
 ### Common Patterns
 
 ```klar
-// Error propagation
+// Error propagation (explicit return required)
 fn load_config(path: string) -> Result[Config, Error] {
-    let content = read_file(path)?
-    let config = parse(content)?
-    Ok(config)
+    let content: string = read_file(path)?
+    let config: Config = parse(content)?
+    return Ok(config)
 }
 
-// Option handling
-let user = find_user(id)
-user match {
-    Some(u) => greet(u)
-    None => println("Not found")
+// Match statement (statement-based)
+let user: ?User = find_user(id)
+var greeting: string
+match user {
+    Some(u) => { greeting = "Hello, {u.name}" }
+    None => { greeting = "Not found" }
 }
+
+// Generics with trait bounds
+fn max[T: Ordered](a: T, b: T) -> T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+// Closures with explicit types
+let double: fn(i32) -> i32 = |x: i32| -> i32 { return x * 2 }
 
 // Ownership transfer
-fn process(data: Data) { ... }  // Takes ownership
-fn inspect(data: &Data) { ... } // Borrows immutably
-fn modify(data: &mut Data) { ... } // Borrows mutably
+fn process(data: Data) { ... }      // Takes ownership
+fn inspect(data: &Data) { ... }     // Borrows immutably
+fn modify(data: &mut Data) { ... }  // Borrows mutably
 ```
 
 ## Checklist
 
 Before committing:
 - [ ] Types are `PascalCase`, functions are `snake_case`
+- [ ] All variables have explicit type annotations
+- [ ] All functions use explicit `return` statements
 - [ ] All fallible operations return `Result[T, E]`
 - [ ] External input is validated before use
 - [ ] Public items are documented
@@ -78,7 +106,7 @@ Rules are auto-loaded from `.claude/rules/`:
 - `naming.md` - Naming conventions
 - `api-design.md` - API design patterns
 - `testing.md` - Testing standards
-- `concurrency.md` - Async, threads
+- `concurrency.md` - Async, threads, channels
 - `comptime.md` - Compile-time patterns
 - `logging.md` - Logging standards
 - `portability.md` - Cross-platform

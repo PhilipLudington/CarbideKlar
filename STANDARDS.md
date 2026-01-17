@@ -4,7 +4,7 @@
 
 These standards define unambiguous, enforceable rules for writing Klar code. They are designed to work with AI-assisted development (Claude Code) and provide clear guidance for both humans and AI to follow.
 
-**Version**: 0.2.0 (aligned with Klar Phase 1 Complete)
+**Version**: 0.4.0 (aligned with Klar Phase 4 - Language Completion)
 
 ---
 
@@ -30,16 +30,29 @@ These standards define unambiguous, enforceable rules for writing Klar code. The
 
 ### 1.1 Klar Version
 
-Target **Klar Phase 1** (tree-walking interpreter) with forward compatibility to Phase 2 (bytecode VM) and Phase 3 (native compiler).
+Target **Klar Phase 4** (Language Completion) with full native compilation via LLVM.
+
+**Implemented Features:**
+- Generic functions, structs, and enums with monomorphization
+- Trait definitions, implementations, and bounds
+- Trait inheritance (single and multiple)
+- Builtin traits: Eq, Ordered, Clone, Drop
+- Three execution backends: interpreter, bytecode VM, native compilation
+
+**In Progress:**
+- Associated types in traits
+- Module system and imports
+- Standard library
 
 ### 1.2 Core Principles
 
 1. **Unambiguous syntax** — No context needed to parse code
 2. **No undefined behavior** — Every operation has defined semantics
 3. **Memory safe by default** — Ownership system prevents common bugs
-4. **Explicit over implicit** — No silent type conversions
-5. **One obvious way** — Minimize redundant features
+4. **Explicit over implicit** — No type inference, explicit `return`, statement-based control flow
+5. **One obvious way** — Single syntax form for each construct
 6. **Fail fast, fail loud** — Detect errors early and report clearly
+7. **AI-first design** — Optimized for AI code generation clarity
 
 ---
 
@@ -94,13 +107,13 @@ Boolean variables and functions MUST read as true/false statements:
 
 ```klar
 // GOOD
-let is_valid = true
-let has_children = node.children.len() > 0
+let is_valid: bool = true
+let has_children: bool = node.children.len() > 0
 if connection.is_open() { ... }
 
 // BAD
-let valid = true        // Ambiguous
-let children = true     // Noun, not predicate
+let valid: bool = true        // Ambiguous
+let children: bool = true     // Noun, not predicate
 if connection.open() { ... }  // Could be verb "open it"
 ```
 
@@ -113,8 +126,8 @@ Treat acronyms as words for casing:
 ```klar
 // GOOD
 struct HttpClient { ... }
-fn parse_json(data: string) -> Result[Json, ParseError]
-let html_content = fetch_page(url)
+fn parse_json(data: string) -> Result[Json, ParseError] { ... }
+let html_content: string = fetch_page(url)
 
 // BAD
 struct HTTPClient { ... }  // Use Http, not HTTP
@@ -263,7 +276,7 @@ fn read_file(path: string) -> Result[string, IoError] {
         return Err(IoError.NotFound(path))
     }
     // ... read file ...
-    Ok(contents)
+    return Ok(contents)
 }
 ```
 
@@ -273,10 +286,10 @@ Use `?` to propagate errors up the call stack:
 
 ```klar
 fn load_config(path: string) -> Result[Config, ConfigError] {
-    let contents = read_file(path)?        // Propagates IoError
-    let parsed = parse_toml(contents)?     // Propagates ParseError
-    let config = Config.from_toml(parsed)? // Propagates ValidationError
-    Ok(config)
+    let contents: string = read_file(path)?        // Propagates IoError
+    let parsed: Toml = parse_toml(contents)?       // Propagates ParseError
+    let config: Config = Config.from_toml(parsed)? // Propagates ValidationError
+    return Ok(config)
 }
 ```
 
@@ -300,14 +313,14 @@ enum Option[T] {
 
 ```klar
 fn find_user(id: i64) -> ?User {
-    users.get(id)  // Returns none if not found
+    return users.get(id)  // Returns None if not found
 }
 
-// Usage
-let user = find_user(42)
-user match {
-    Some(u) => greet(u)
-    None => println("User not found")
+// Usage with match statement (statement-based, not expression)
+let user: ?User = find_user(42)
+match user {
+    Some(u) => { greet(u) }
+    None => { println("User not found") }
 }
 ```
 
@@ -329,23 +342,25 @@ enum ConfigError {
 ### 4.6 Error Handling Patterns
 
 ```klar
-// Pattern 1: Match for specific handling
-result match {
-    Ok(value) => use(value)
-    Err(ConfigError.NotFound(_)) => use_defaults()
-    Err(e) => return Err(e)
+// Pattern 1: Match for specific handling (statement-based)
+var output: Config
+match result {
+    Ok(value) => { output = value }
+    Err(ConfigError.NotFound(_)) => { output = use_defaults() }
+    Err(e) => { return Err(e) }
 }
 
 // Pattern 2: Unwrap with default
-let value = result.unwrap_or(default)
+let value: i32 = result ?? default
 
-// Pattern 3: Map the success value
-let mapped = result.map(|x| x * 2)
+// Pattern 3: Map the success value (closure with explicit types)
+let mapper: fn(i32) -> i32 = |x: i32| -> i32 { return x * 2 }
+let mapped: Result[i32, E] = result.map(mapper)
 
 // Pattern 4: Chain fallible operations
-let final = first_try()
-    .or_else(|_| second_try())
-    .or_else(|_| third_try())
+let final_result: Result[Data, Error] = first_try()
+    .or_else(|_: Error| -> Result[Data, Error] { return second_try() })
+    .or_else(|_: Error| -> Result[Data, Error] { return third_try() })
 ```
 
 ### 4.7 Panic and Assert
@@ -357,7 +372,7 @@ let final = first_try()
 ```klar
 fn divide(a: i32, b: i32) -> i32 {
     assert(b != 0)  // Bug if called with b=0
-    a / b
+    return a / b
 }
 ```
 
@@ -403,7 +418,7 @@ fn create_window(config: WindowConfig) -> Window
 ```klar
 impl Player {
     fn get_health(self: &Player) -> i32 {
-        self.health
+        return self.health
     }
 
     fn take_damage(self: &mut Player, amount: i32) {
@@ -418,11 +433,11 @@ impl Player {
 
 ```klar
 // Owned return - caller owns the result
-fn load_texture(path: string) -> Result[Texture, LoadError]
+fn load_texture(path: string) -> Result[Texture, LoadError] { ... }
 
 // Reference return - for accessing internal state
 fn get_name(self: &Player) -> &string {
-    &self.name
+    return &self.name
 }
 ```
 
@@ -452,27 +467,132 @@ trait Stream {
 
 **A5**: Provide default implementations where sensible.
 
+```klar
+trait Printable {
+    fn to_string(self) -> string
+
+    // Default implementation uses to_string()
+    fn print(self) {
+        println(self.to_string())
+    }
+}
+```
+
 ### 5.4 Generics
 
 **A6**: Use trait bounds to constrain generic types.
 
 ```klar
+// Generic function with trait bound
 fn max[T: Ordered](a: T, b: T) -> T {
-    if a > b { a } else { b }
+    if a > b {
+        return a
+    }
+    return b
 }
 
-fn print_all[T: Printable](items: &[T]) {
+// Multiple trait bounds
+fn print_all[T: Printable + Clone](items: &[T]) {
     for item in items {
         println("{item}")
     }
+}
+
+// Where clauses for complex bounds
+fn merge[K, V](a: Map[K, V], b: Map[K, V]) -> Map[K, V]
+where
+    K: Hashable + Eq
+    V: Clone
+{
+    // ...
 }
 ```
 
 **A7**: Prefer concrete types over generics for public APIs when the types are known.
 
-### 5.5 Module Visibility
+### 5.5 Generic Types
 
-**A8**: Make items private by default. Only expose what's necessary.
+**A8**: Define generic structs and enums with type parameters.
+
+```klar
+// Generic struct
+struct Pair[A, B] {
+    first: A
+    second: B
+}
+
+// Generic enum (standard library)
+enum Option[T] {
+    Some(T)
+    None
+}
+
+enum Result[T, E] {
+    Ok(T)
+    Err(E)
+}
+
+// Usage with explicit type parameters
+let pair: Pair[i32, string] = Pair { first: 42, second: "hello" }
+let maybe: Option[i32] = Some(42)
+```
+
+### 5.6 Trait Implementation
+
+**A9**: Implement traits with the `impl Type: Trait` syntax.
+
+```klar
+// Implement trait for concrete type
+impl i32: Ordered {
+    fn compare(self, other: i32) -> Ordering {
+        if self < other {
+            return Ordering.Less
+        } else if self > other {
+            return Ordering.Greater
+        }
+        return Ordering.Equal
+    }
+}
+
+// Implement trait for generic type
+impl List[T]: Iterator {
+    type Item = T
+    fn next(self: &mut Self) -> ?T { ... }
+}
+```
+
+### 5.7 Builtin Traits
+
+Klar provides builtin traits that are automatically implemented for primitive types:
+
+| Trait | Purpose | Primitives |
+|-------|---------|------------|
+| `Eq` | Equality comparison (`==`, `!=`) | All primitives |
+| `Ordered` | Ordering comparison (`<`, `>`, `<=`, `>=`) | Numeric, string |
+| `Clone` | Explicit value copying | All primitives |
+| `Drop` | Custom cleanup on scope exit | User-defined |
+
+```klar
+// Using builtin traits
+fn equals[T: Eq](a: T, b: T) -> bool {
+    return a == b
+}
+
+// Custom Drop implementation
+struct FileHandle {
+    fd: i32
+}
+
+impl FileHandle: Drop {
+    fn drop(self: &mut Self) {
+        close_fd(self.fd)
+    }
+}
+```
+
+### 5.8 Module Visibility
+
+**A10**: Make items private by default. Only expose what's necessary.
 
 ```klar
 module http_client
@@ -871,19 +991,23 @@ pub fn get_health(self: &Player) -> i32 { ... }
 
 ```klar
 // PREFERRED: Message passing
-let (tx, rx) = channel[Message]()
+let channel_pair: (Sender[Message], Receiver[Message]) = channel[Message]()
+let tx: Sender[Message] = channel_pair.0
+let rx: Receiver[Message] = channel_pair.1
 
-spawn || {
+// Spawn with explicit closure type
+let worker: fn() -> void = || -> void {
     loop {
-        let msg = rx.recv()
+        let msg: Message = rx.recv()
         process(msg)
     }
 }
+spawn worker
 
 tx.send(Message.DoWork(data))
 
 // AVOID when possible: Shared mutable state
-let shared = Arc.new(Mutex.new(data))
+let shared: Arc[Mutex[Data]] = Arc.new(Mutex.new(data))
 ```
 
 **C3**: When using shared state, prefer `Arc[Mutex[T]]` for clarity.
@@ -893,24 +1017,90 @@ let shared = Arc.new(Mutex.new(data))
 **C4**: Use `async`/`await` for I/O-bound concurrent operations.
 
 ```klar
-async fn fetch_all(urls: [string]) -> [Result[Response, HttpError]] {
-    let futures = urls.map(|url| fetch(url))
-    await_all(futures)
+async fn fetch_data(url: string) -> Result[Data, HttpError] {
+    let response: Response = http.get(url).await?
+    let body: string = response.read_body().await?
+    return Ok(parse(body))
+}
+
+async fn main() {
+    let data: Data = fetch_data("https://api.example.com").await?
+    process(data)
 }
 ```
 
 **C5**: Avoid blocking in async functions.
 
-### 10.4 Spawn
+### 10.4 Concurrent Operations
 
-**C6**: Use `spawn` for CPU-bound parallel work.
+**C6**: Use `await_all` for concurrent async operations.
 
 ```klar
-fn parallel_process(items: [Item]) -> [Result] {
-    let handles = items.map(|item| {
-        spawn || process_item(item)
-    })
-    handles.map(|h| h.join())
+async fn fetch_multiple(urls: List[string]) -> List[Result[Response, HttpError]] {
+    let results: (Data, Data, Data) = await_all(
+        fetch("/api/a"),
+        fetch("/api/b"),
+        fetch("/api/c")
+    )
+    let a: Data = results.0
+    let b: Data = results.1
+    let c: Data = results.2
+    return process_all(a, b, c)
+}
+
+// First to complete
+let first: Data = await_first(
+    fetch("/primary"),
+    fetch("/backup")
+)
+```
+
+### 10.5 Spawn and Tasks
+
+**C7**: Use `spawn` for concurrent tasks.
+
+```klar
+// Fire and forget
+spawn handle_connection(conn)
+
+// Await result
+let task: Task[Data] = spawn fetch_data(url)
+let result: Data = task.await
+```
+
+### 10.6 Channels and Select
+
+**C8**: Use select for multiplexing channels.
+
+```klar
+loop {
+    select {
+        msg from inbox => { handle_message(msg) }
+        tick from timer => { handle_tick() }
+        _ from shutdown => { break }
+    }
+}
+```
+
+### 10.7 Synchronization Primitives
+
+**C9**: Use appropriate synchronization for shared state.
+
+```klar
+// Mutex for exclusive access
+let data: Mutex[HashMap[string, i32]] = Mutex.new(HashMap.new())
+{
+    var guard: MutexGuard[HashMap[string, i32]] = data.lock()
+    guard.insert("key", value)
+}
+
+// RwLock for read-heavy workloads
+let cache: RwLock[HashMap[string, i32]] = RwLock.new(HashMap.new())
+{
+    let view: ReadGuard[HashMap[string, i32]] = cache.read()   // Many readers
+}
+{
+    var edit: WriteGuard[HashMap[string, i32]] = cache.write() // Exclusive writer
 }
 ```
 
@@ -939,10 +1129,13 @@ const LOOKUP_TABLE: [u8; TABLE_SIZE] = comptime {
 
 ```klar
 comptime fn factorial(n: u64) -> u64 {
-    if n <= 1 { 1 } else { n * factorial(n - 1) }
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
 }
 
-const FACT_10 = factorial(10)  // Computed at compile time
+const FACT_10: u64 = factorial(10)  // Computed at compile time
 ```
 
 ### 11.3 Conditional Compilation
@@ -1094,4 +1287,4 @@ Before committing code, verify:
 
 ---
 
-*CarbideKlar Standards v0.2.0 - Aligned with Klar Phase 1 Complete*
+*CarbideKlar Standards v0.4.0 - Aligned with Klar Phase 4 (Language Completion)*

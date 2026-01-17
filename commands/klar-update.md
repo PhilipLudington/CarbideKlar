@@ -11,90 +11,119 @@ Update CarbideKlar to the latest version.
 ## What This Command Does
 
 1. Fetches latest CarbideKlar from repository
-2. Updates rules and commands
-3. Preserves any local customizations (optional)
+2. Updates rules, commands, and documentation
+3. Preserves any local customizations (optional backup)
 
 ## Instructions for Claude
 
 When the user runs `/klar-update`:
 
-1. **Check current installation**:
-   - Verify `.claude/rules/` exists
-   - Verify `.claude/commands/` exists
-   - If not installed, suggest `/klar-install` instead
+### 1. Check current installation
 
-2. **Backup current files** (optional):
+Verify CarbideKlar is installed:
 
-Ask user:
+```bash
+ls .claude/rules/ .claude/commands/
+```
+
+If directories don't exist, suggest `/klar-install` instead:
+```
+CarbideKlar is not installed. Run /klar-install first.
+```
+
+### 2. Offer backup (ask user)
+
 ```
 Found existing CarbideKlar installation.
 Do you want to backup current rules before updating? [Y/n]
 ```
 
-If yes:
+If yes, create backups:
 ```bash
-cp -r .claude/rules .claude/rules.backup
-cp -r .claude/commands .claude/commands.backup
+cp -r .claude/rules .claude/rules.backup.$(date +%Y%m%d)
+cp -r .claude/commands .claude/commands.backup.$(date +%Y%m%d)
 ```
 
-3. **Fetch latest version**:
+### 3. Fetch latest CarbideKlar
 
-From CarbideKlar repository:
-- Download latest `rules/*.md`
-- Download latest `commands/*.md`
+Remove old version and clone fresh:
 
-4. **Update files**:
-
-Replace:
-- `.claude/rules/*.md` with new versions
-- `.claude/commands/*.md` with new versions
-
-5. **Show changes**:
-
+```bash
+rm -rf carbideklar
+git clone https://github.com/PhilipLudington/CarbideKlar.git carbideklar
+rm -rf carbideklar/.git
 ```
-# CarbideKlar Update Report
+
+### 4. Copy updated files
+
+Copy all CarbideKlar integration files:
+
+```bash
+# Commands
+cp carbideklar/commands/*.md .claude/commands/
+
+# Rules
+cp carbideklar/rules/*.md .claude/rules/
+
+# Documentation (create dirs if needed)
+mkdir -p .claude/docs/patterns .claude/docs/security
+cp -r carbideklar/docs/patterns/*.md .claude/docs/patterns/
+cp -r carbideklar/docs/security/*.md .claude/docs/security/
+```
+
+### 5. Update version tracking
+
+Create/update version file:
+
+```bash
+echo "0.4.0" > .claude/carbideklar-version
+```
+
+### 6. Show update report
+
+```markdown
+# CarbideKlar Update Complete
+
+**Updated to:** v0.4.0 (Phase 4 - Language Completion)
 
 ## Updated Files
 
 ### Rules
-- ownership.md: Updated (new smart pointer guidance)
-- errors.md: Updated (clarified ? usage)
-- security.md: No changes
-- naming.md: No changes
-- api-design.md: Updated (added trait section)
-- testing.md: No changes
-- concurrency.md: Updated (new async patterns)
-- comptime.md: No changes
-- logging.md: No changes
-- portability.md: No changes
+- api-design.md: Updated (generics, trait implementation)
+- concurrency.md: Updated (async/await, channels, select)
+- errors.md: Updated (try blocks, error conversion)
+- ownership.md: Updated (Drop trait, smart pointers)
+- traits.md: NEW (trait patterns and builtin traits)
+- naming.md, security.md, testing.md, comptime.md, logging.md, portability.md
 
 ### Commands
-- klar-init.md: Updated (new template)
-- klar-review.md: No changes
-- klar-safety.md: Updated (new checks)
-- klar-check.md: No changes
-- klar-install.md: No changes
-- klar-update.md: No changes
+- klar-init.md: Updated (Phase 4 syntax)
+- klar-install.md, klar-review.md, klar-safety.md, klar-check.md, klar-update.md
 
-## Summary
-- Rules updated: 4
-- Commands updated: 2
-- Backup saved to: .claude/rules.backup/
+### Documentation
+- docs/patterns/generics.md: NEW (generic programming patterns)
+- docs/patterns/ownership.md, api-design.md, errors.md, resources.md
+- docs/security/unsafe-blocks.md, injection.md, validation.md
 
-## What's New
-- Improved smart pointer guidance in ownership rules
-- New async/await patterns for concurrency
-- Enhanced project template in klar-init
+## What's New in v0.4.0
+
+- **Generics**: Generic functions, structs, enums with trait bounds
+- **Traits**: Builtin traits (Eq, Ordered, Clone, Drop), custom implementations
+- **Async/Await**: Full async patterns, spawn, channels, select
+- **Syntax**: Explicit types, explicit return, statement-based control flow
+- **Phase 4 Alignment**: Full native compilation support via LLVM
 ```
 
-6. **Verify installation**:
+### 7. Verify installation
 
 ```bash
 ls .claude/rules/
 ls .claude/commands/
+ls .claude/docs/patterns/
+cat .claude/carbideklar-version
 ```
 
-Confirm all files present.
+Confirm all files present and version is correct.
 
 ## Rollback
 
@@ -104,24 +133,31 @@ If update causes issues:
 /klar-update --rollback
 ```
 
-Restores from backup:
+Instructions for Claude:
+
 ```bash
-rm -rf .claude/rules
-mv .claude/rules.backup .claude/rules
-rm -rf .claude/commands
-mv .claude/commands.backup .claude/commands
+# Find most recent backup
+BACKUP=$(ls -d .claude/rules.backup.* 2>/dev/null | tail -1)
+
+if [ -n "$BACKUP" ]; then
+    rm -rf .claude/rules
+    mv "$BACKUP" .claude/rules
+
+    COMMANDS_BACKUP=$(ls -d .claude/commands.backup.* 2>/dev/null | tail -1)
+    if [ -n "$COMMANDS_BACKUP" ]; then
+        rm -rf .claude/commands
+        mv "$COMMANDS_BACKUP" .claude/commands
+    fi
+
+    echo "Rolled back to previous version"
+else
+    echo "No backup found. Cannot rollback."
+fi
 ```
 
-## Version Tracking
+## Version History
 
-Consider adding version file:
-
-`.claude/carbideklar-version`:
-```
-0.1.0
-```
-
-Update command checks this to show:
-- Current version
-- Available version
-- Changelog summary
+| Version | Klar Phase | Key Features |
+|---------|------------|--------------|
+| 0.4.0 | Phase 4 | Generics, traits, async/await, explicit syntax |
+| 0.2.0 | Phase 1 | Initial release, ownership, errors, security |

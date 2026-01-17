@@ -25,13 +25,24 @@ fn modify(data: &mut Data) { ... }
 fn consume(data: Data) { ... }
 ```
 
+## Reference Syntax
+
+| Syntax | Meaning |
+|--------|---------|
+| `T` | Owned value (takes ownership) |
+| `&T` | Immutable reference (read-only borrow) |
+| `&mut T` | Mutable reference (read-write borrow) |
+| `?T` | Optional value (may be `None`) |
+
 ## Smart Pointer Guidelines
 
 | Type | When to Use |
 |------|-------------|
 | `Rc[T]` | Single-threaded shared ownership |
 | `Arc[T]` | Thread-safe shared ownership |
+| `Cell[T]` | Interior mutability for Copy types |
 | `RefCell[T]` | Interior mutability with runtime checks |
+| `Weak[T]` | Non-owning reference to break cycles |
 
 **Avoid**:
 - Using `Rc`/`Arc` when ownership would work
@@ -49,8 +60,15 @@ struct Parser { input: &string }
 // GOOD: Own the data
 struct Parser { input: string }
 
-// GOOD: Use indices
-struct Selection { buffer_id: usize, start: usize, end: usize }
+// GOOD: Use Rc for shared ownership
+struct Parser { input: Rc[string] }
+
+// GOOD: Use indices for referencing into collections
+struct Selection {
+    buffer_id: i32
+    start: i32
+    end: i32
+}
 ```
 
 ## Common Patterns
@@ -58,14 +76,44 @@ struct Selection { buffer_id: usize, start: usize, end: usize }
 ```klar
 // Builder pattern - takes ownership, returns owned
 fn with_name(self: Config, name: string) -> Config {
-    Config { name: name, ..self }
+    return Config { name: name, ..self }
 }
 
 // Clone when needed
-let copy = original.clone()
+let copy: Data = original.clone()
 
 // Take ownership to prevent further use
 fn close(connection: Connection) {
     // connection is dropped at end
 }
+
+// Interior mutability for shared mutable state
+let counter: Rc[Cell[i32]] = Rc.new(Cell.new(0))
+counter.set(counter.get() + 1)
+
+// RefCell for complex values
+let buffer: Rc[RefCell[Buffer]] = Rc.new(RefCell.new(Buffer.new(1024)))
+buffer.borrow_mut().write(data)
+```
+
+## Drop Trait
+
+Implement `Drop` for custom cleanup:
+
+```klar
+struct FileHandle {
+    fd: i32
+}
+
+impl FileHandle: Drop {
+    fn drop(self: &mut Self) {
+        close_fd(self.fd)
+    }
+}
+
+// Automatic cleanup when scope ends
+fn use_file() {
+    let handle: FileHandle = open_file("data.txt")
+    // ... use handle ...
+}   // drop() called automatically here
 ```

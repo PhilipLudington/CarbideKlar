@@ -47,7 +47,7 @@ When the user runs `/klar-init <name>`:
 ///
 /// # Example
 /// ```
-/// zig build run
+/// klar build -o <name> && ./<name>
 /// ```
 module main
 
@@ -55,7 +55,7 @@ import std.io.println
 
 pub fn main() -> Result[(), Error] {
     println("Hello from <name>!")
-    Ok(())
+    return Ok(())
 }
 ```
 
@@ -73,7 +73,7 @@ pub struct Config {
 
 pub fn create(config: Config) -> Result[<Name>, Error] {
     // Implementation
-    Ok(<Name> { config })
+    return Ok(<Name> { config: config })
 }
 
 // Private implementation
@@ -90,8 +90,8 @@ module test_<name>
 import <name>.{Config, create}
 
 fn test_create_success() {
-    let config = Config { }
-    let result = create(config)
+    let config: Config = Config { }
+    let result: Result[<Name>, Error] = create(config)
     assert(result.is_ok(), "Expected successful creation")
 }
 
@@ -142,19 +142,19 @@ pub fn build(b: *std.Build) void {
 ## Building
 
 ```bash
-zig build
+klar build src/main.kl -o <name>
 ```
 
 ## Running
 
 ```bash
-zig build run
+./<name>
 ```
 
 ## Testing
 
 ```bash
-zig build test
+klar test tests/
 ```
 
 ## License
@@ -169,6 +169,8 @@ zig-out/
 .zig-cache/
 *.o
 *.a
+*.ll
+*.s
 ```
 
 8. **Copy CarbideKlar files**:
@@ -177,7 +179,7 @@ zig-out/
 
 9. **Report completion**:
    - Show created file structure
-   - Suggest next steps: `cd <name> && zig build`
+   - Suggest next steps: `cd <name> && klar build src/main.kl -o <name>`
 
 ## Naming Conventions Applied
 
@@ -185,3 +187,11 @@ zig-out/
 - Module names: `snake_case`
 - Type names: `PascalCase`
 - Function names: `snake_case`
+
+## Klar Syntax Requirements
+
+All generated code follows Phase 4 syntax:
+- **Explicit types**: `let x: i32 = 42`
+- **Explicit return**: `return Ok(value)` (not implicit last expression)
+- **Statement-based control flow**: assign inside blocks
+- **Closures with full types**: `|x: i32| -> i32 { return x * 2 }`

@@ -14,52 +14,59 @@ Think of it as a development framework that helps you (and AI assistants) write 
 
 ## Quick Start
 
-### Using CarbideKlar Commands (No Setup Required)
+### 1. Install CarbideKlar
 
-These commands work on any Klar code:
-
-```
-/klar-review path/to/file.kl    # Review code against CarbideKlar standards
-/klar-safety path/to/file.kl    # Security-focused review
-```
-
-### Creating a New Project
+Run these two commands in your project directory:
 
 ```bash
-# In Claude Code, run:
+mkdir -p .claude/commands
+curl -o .claude/commands/klar-install.md https://raw.githubusercontent.com/PhilipLudington/CarbideKlar/main/commands/klar-install.md
+```
+
+Then in Claude Code, run:
+```
+/klar-install
+```
+
+This installs CarbideKlar with all rules, commands, and documentation.
+
+### 2. Use the Commands
+
+After installation, these commands are available:
+
+```
+/klar-review src/main.kl    # Review code against standards
+/klar-safety src/main.kl    # Security-focused review
+/klar-check                 # Run build, tests, and validation
+/klar-init my_project       # Create a new CarbideKlar project
+```
+
+### 3. Update Existing Installation
+
+To update CarbideKlar to the latest version:
+
+```
+/klar-update
+```
+
+This fetches the latest version and updates all rules and commands while optionally backing up your current installation.
+
+### Creating New Projects
+
+To create a new project with CarbideKlar already configured:
+
+```
 /klar-init my_project
 ```
 
-This creates a new project with:
-- Standard directory structure
+This creates:
+- Standard directory structure (`src/`, `tests/`)
 - Build configuration (build.zig)
-- CarbideKlar rules and commands
+- CarbideKlar rules and commands pre-installed
 
-### Adding to an Existing Project
+### Note: Submodules
 
-1. **Copy the install command** to your project:
-   ```bash
-   mkdir -p .claude/commands
-   curl -o .claude/commands/klar-install.md https://raw.githubusercontent.com/PhilipLudington/CarbideKlar/main/commands/klar-install.md
-   ```
-
-2. **Run the install command** in Claude Code:
-   ```
-   /klar-install
-   ```
-
-This will guide you through cloning CarbideKlar, copying the necessary files, and configuring your project.
-
-Once set up, use the CarbideKlar slash commands:
-```
-/klar-review src/main.kl          # Review against standards
-/klar-check                       # Run validation tooling
-/klar-update                      # Update to latest version
-```
-
-### CarbideKlar in Submodules
-
-If your project includes submodules that also use CarbideKlar, there's no conflict. Claude Code uses the `.claude/` directory at the **git root**, so only the parent project's commands and rules are active. The submodule's CarbideKlar files are simply ignored when working from the parent project.
+If your project includes submodules that also use CarbideKlar, there's no conflict. Claude Code uses the `.claude/` directory at the **git root**, so only the parent project's commands and rules are active.
 
 ## Standards Overview
 
@@ -70,6 +77,8 @@ CarbideKlar enforces standards in these areas:
 | **Naming** | `PascalCase` types, `snake_case` functions |
 | **Ownership** | Clear ownership, explicit borrowing |
 | **Errors** | `Result[T, E]` for fallible operations |
+| **Generics** | Trait bounds, monomorphization |
+| **Traits** | Builtin traits (Eq, Ordered, Clone, Drop) |
 | **Security** | Input validation, bounds checking |
 | **Testing** | Tests for all public functions |
 | **Documentation** | Document all public APIs |
@@ -128,9 +137,12 @@ CarbideKlar is designed to complement Klar's built-in safety:
 |---------------|------------------|
 | Ownership system | Ownership patterns and idioms |
 | Result/Option types | Error handling conventions |
+| Generics with monomorphization | Generic programming patterns |
+| Trait system (Eq, Ordered, Clone, Drop) | Trait implementation patterns |
 | Bounds checking | Input validation discipline |
 | No undefined behavior | Security best practices |
 | Module system | API design patterns |
+| Async/await | Concurrency patterns |
 
 ## License
 
@@ -145,4 +157,4 @@ CarbideKlar is designed to evolve with Klar. Contributions welcome for:
 
 ---
 
-*CarbideKlar v0.2.0 - For Klar Phase 1 Complete*
+*CarbideKlar v0.4.0 - For Klar Phase 4 (Language Completion)*
