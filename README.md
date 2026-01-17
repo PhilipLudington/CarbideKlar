@@ -37,23 +37,29 @@ This creates a new project with:
 
 ### Adding to an Existing Project
 
-1. **Clone CarbideKlar** into your project:
+1. **Copy the install command** to your project:
    ```bash
-   git clone https://github.com/PhilipLudington/CarbideKlar.git carbideklar
-   rm -rf carbideklar/.git
+   mkdir -p .claude/commands
+   curl -o .claude/commands/klar-install.md https://raw.githubusercontent.com/PhilipLudington/CarbideKlar/main/commands/klar-install.md
    ```
 
-2. **Copy Claude Code integration**:
-   ```bash
-   mkdir -p .claude/commands .claude/rules
-   cp carbideklar/commands/*.md .claude/commands/
-   cp carbideklar/rules/*.md .claude/rules/
-   ```
-
-3. **Run the install command** in Claude Code (optional, for additional setup):
+2. **Run the install command** in Claude Code:
    ```
    /klar-install
    ```
+
+This will guide you through cloning CarbideKlar, copying the necessary files, and configuring your project.
+
+Once set up, use the CarbideKlar slash commands:
+```
+/klar-review src/main.kl          # Review against standards
+/klar-check                       # Run validation tooling
+/klar-update                      # Update to latest version
+```
+
+### CarbideKlar in Submodules
+
+If your project includes submodules that also use CarbideKlar, there's no conflict. Claude Code uses the `.claude/` directory at the **git root**, so only the parent project's commands and rules are active. The submodule's CarbideKlar files are simply ignored when working from the parent project.
 
 ## Standards Overview
 
