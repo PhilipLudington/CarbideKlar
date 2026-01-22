@@ -2,7 +2,7 @@
 
 > For Claude Code and AI-assisted Klar development
 >
-> **Version 0.4.1** - Aligned with Klar Phase 4 (Language Completion)
+> **Version 0.1.0**
 
 ## Language Reference
 
@@ -90,12 +90,10 @@ Before committing:
 
 | Command | Purpose |
 |---------|---------|
-| `/klar-init` | Create new Klar-Toolkit project |
-| `/klar-install` | Add Klar-Toolkit to existing project |
+| `/klar-init` | Create new Klar project |
 | `/klar-review` | Review code against standards |
 | `/klar-safety` | Security-focused review |
 | `/klar-check` | Run build, tests, and checks |
-| `/klar-update` | Update Klar-Toolkit |
 
 ## Rule Categories
 

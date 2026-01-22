@@ -160,7 +160,7 @@ out/
 
 ## Klar Syntax Requirements
 
-All generated code follows Phase 4 syntax:
+All generated code follows Klar syntax:
 - **Explicit types**: `let x: i32 = 42`
 - **Explicit return**: `return Ok(value)` (not implicit last expression)
 - **Statement-based control flow**: assign inside blocks
